@@ -22,15 +22,18 @@ var grammars = [
 		"sourceTexts": [
 			{
 				"name": "Main.jack",
-				"src": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/Main.jack"
+				"src": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/Main.jack",
+				"expected": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/MainT.xml"
 			},
 			{
 				"name": "Square.jack",
-				"src": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/Square.jack"
+				"src": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/Square.jack",
+				"expected": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/SquareT.xml"
 			},
 			{
 				"name": "SquareGame.jack",
-				"src": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/SquareGame.jack"
+				"src": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/SquareGame.jack",
+				"expected": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/SquareGameT.xml"
 			},
 		]
 	}
@@ -41,7 +44,7 @@ function retrieveGrammars() {
 		var grammar = grammars[i];
 		var xhr = new XMLHttpRequest();
 
-		xhr.open("GET", grammar.src);
+		xhr.open("GET", grammar.src, true);
 		xhr.onreadystatechange = grammarComplete.bind(grammar, xhr);
 		xhr.send();
 	}

@@ -21,7 +21,13 @@ KeywordLiteral = 'class' / 'function' / 'void' / 'var' / 'let' / 'do' /
 Symbol = literal:SymbolLiteral
 { return "<symbol> " + literal + " </symbol>\n"; }
 
-SymbolLiteral = [{(}).;=,~+<&>-]
+SymbolLiteral = BasicSymbolLiteral / XMLSymbolLiteral
+
+BasicSymbolLiteral = [{(}).;=,~+-]
+
+XMLSymbolLiteral = '<' { return "&lt;"; } /
+    '>' { return "&gt;"; } /
+    '&' { return "&amp;"; }
 
 Identifier = literal:IdentifierLiteral
 { return "<identifier> " + literal + " </identifier>\n"; }

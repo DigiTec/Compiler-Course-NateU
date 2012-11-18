@@ -1,0 +1,188 @@
+<!DOCTYPE HTML>
+
+<script>
+
+var pipelineInputs = [
+	"https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/MainT.xml",
+	"https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/SquareT.xml",
+	"https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/JackTexts/SquareGameT.xml",
+];
+
+var currentOffset = 0;
+function runPipeline() {
+	var sourceTokens = pipelineInputs[currentOffset++];
+
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", sourceTokens, true);
+	xhr.onreadystatechange = loadTokens.bind(xhr);
+	xhr.send();
+}
+
+function loadTokens() {
+	if (this.readyState === 4 && this.status === 200) {
+		var tokens = this.responseText;
+		processTokens(tokens);
+	}
+}
+
+function processTokens(tokens) {
+	parseTree = runAnalyzer(tokens);
+	compareParsedOutput(parseTree);
+}
+
+function compareParsedOutput(parseTree) {
+}
+
+function runAnalyzer(tokens) {
+	var parser = new DOMParser();
+	var tokenOm = parser.parseFromString(tokens, "text/xml");
+	var tokenIterator = tokenOm.documentElement.firstElementChild;
+	var parseTree = tokenOm.createDocumentFragment();
+
+	document.getElementById("resultText").value = "";
+	try {
+		while(tokenIterator) {
+			tokenIterator = ProcessFileToken(tokenOm, parseTree, tokenIterator);
+			tokenIterator = tokenIterator.nextElementSibling;
+		}
+	}
+	catch(exc) {
+		document.getElementById("resultText").value = "Exception: " + exc.toString() + "\n\n\n";
+	}
+	var serializer = new XMLSerializer();
+	document.getElementById("resultText").value += serializer.serializeToString(parseTree);
+}
+
+function ProcessFileToken(parseDoc, parseTree, tokenIterator) {
+	if (tokenIterator.tagName === "keyword") {
+		switch(tokenIterator.textContent) {
+			case " class ":
+				var classNode = parseDoc.createElement("class");
+				parseTree.appendChild(classNode);
+
+				return ProcessClassToken(parseDoc, classNode, tokenIterator);
+		}
+	}
+
+	throw "Error in ProcessFile";
+}
+
+function ProcessClassToken(parseDoc, parseTree, tokenIterator) {
+	// Validate and build the basic class token
+	appendChild(parseTree, tokenIterator);
+	tokenIterator = VerifyNode(tokenIterator.nextElementSibling, "identifier");
+	appendChild(parseTree, tokenIterator);
+	tokenIterator = VerifyNode(tokenIterator.nextElementSibling, "symbol", " { ");
+	appendChild(parseTree, tokenIterator);
+
+	tokenIterator = tokenIterator.nextElementSibling;
+	while(tokenIterator.tagName !== "symbol" || tokenIterator.textContent != " } ") {
+		if (tokenIterator.tagName === "keyword") {
+			switch(tokenIterator.textContent) {
+				case " function ":
+					var subroutine = parseDoc.createElement("subroutineDec");
+					parseTree.appendChild(subroutine);
+
+					tokenIterator = ProcessSubroutineToken(parseDoc, subroutine, tokenIterator);
+					break;
+			}
+		}
+	}
+
+	tokenIterator = VerifyNode(tokenIterator, "symbol", " } ");
+	parseTree.appendChild(tokenIterator);
+
+	return tokenIterator;
+}
+
+function ProcessSubroutineToken(parseDoc, parseTree, tokenIterator) {
+	appendChild(parseTree, tokenIterator);
+	tokenIterator = tokenIterator.nextElementSibling;
+	if (tokenIterator.tagName === "keyword" || tokenIterator.tagName === "identifier") {
+		appendChild(parseTree, tokenIterator);
+	}
+	else {
+		throw "Unexpected token parsing subroutine";
+	}
+
+	// Function name
+	tokenIterator = VerifyNode(tokenIterator.nextElementSibling, "identifier");
+	appendChild(parseTree, tokenIterator);
+
+	// Parameter List
+	tokenIterator = VerifyNode(tokenIterator.nextElementSibling, "symbol", " ( ");
+	appendChild(parseTree, tokenIterator);
+
+	// Skip the parameter list contents for now
+	tokenIterator = tokenIterator.nextElementSibling;
+	while (tokenIterator.tagName !== "symbol" || tokenIterator.textContent !== " ) ") {
+		tokenIterator = tokenIterator.nextElementSibling;
+	}
+
+	tokenIterator = VerifyNode(tokenIterator, "symbol", " ) ");
+	appendChild(parseTree, tokenIterator);
+
+	// Function Body
+	var subroutineBody = parseDoc.createElement("subroutineBody");
+	parseTree.appendChild(subroutineBody);
+
+	return ProcessSubroutineBody(parseDoc, subroutineBody, tokenIterator);
+}
+
+function ProcessVariableDeclaration(parseDoc, parseTree, tokenIterator) {
+	appendChild(parseTree, tokenIterator);
+
+	tokenIterator = VerifyNode(tokenIterator.nextElementSibling, "identifier");
+	appendChild(parseTree, tokenIterator);
+	tokenIterator = VerifyNode(tokenIterator.nextElementSibling, "identifier");
+	appendChild(parseTree, tokenIterator);
+	tokenIterator = VerifyNode(tokenIterator.nextElementSibling, "symbol", " ; ");
+	appendChild(parseTree, tokenIterator);
+
+	return tokenIterator;
+}
+
+function ProcessSubroutineBody(parseDoc, parseTree, tokenIterator) {
+	tokenIterator = VerifyNode(tokenIterator.nextElementSibling, "symbol", " { ");
+	appendChild(parseTree, tokenIterator);
+
+	tokenIterator = tokenIterator.nextElementSibling;
+
+	// Process Variable Declarations
+	while (tokenIterator.tagName === "keyword" && tokenIterator.textContent === " var ") {
+		var variableDecl = parseDoc.createElement("varDec");
+		parseTree.appendChild(variableDecl);
+
+		tokenIterator = ProcessVariableDeclaration(parseDoc, variableDecl, tokenIterator);
+		tokenIterator = tokenIterator.nextElementSibling;
+	}
+
+	// Process Statements
+	while (tokenIterator.tagName !== "symbol" || tokenIterator.textContent !== " } ") {
+		tokenIterator = tokenIterator.nextElementSibling;
+	}
+
+	tokenIterator = VerifyNode(tokenIterator, "symbol", " } ");
+	appendChild(parseTree, tokenIterator);
+
+	return tokenIterator;
+}
+
+function VerifyNode(node, tagName, value) {
+	if (node.tagName !== tagName) {
+		throw "Unexpected tagName " + node.tagName;
+	}
+	if (value && value !== node.textContent) {
+		throw "Unexpected value " + node.textContent;
+	}
+	return node;
+}
+
+function appendChild(parent, child) {
+	parent.appendChild(child.cloneNode(true));
+}
+</script>
+
+<body onload="runPipeline()">
+	<textarea id="resultText" rows=80 cols=165></texarea>
+</body>
