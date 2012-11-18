@@ -13,12 +13,15 @@ IntegerConstantLiteral = digits:[0-9]+ { return digits.join(""); }
 Keyword = literal:KeywordLiteral
 { return "<keyword> " + literal + " </keyword>\n"; }
 
-KeywordLiteral = 'class' / 'function' / 'void' / 'var' / 'let' / 'do'
+KeywordLiteral = 'class' / 'function' / 'void' / 'var' / 'let' / 'do' /
+                 'field' / 'int' / 'constructor' / 'return' / 'this' /
+                 'method' / 'char' / 'boolean' / 'false' / 'true' / 'if' /
+                 'while'
 
 Symbol = literal:SymbolLiteral
 { return "<symbol> " + literal + " </symbol>\n"; }
 
-SymbolLiteral = '{' / '(' / '}' / ')' / '.' / ';' / '=' / ',' / '~'
+SymbolLiteral = [{(}).;=,~+<&>-]
 
 Identifier = literal:IdentifierLiteral
 { return "<identifier> " + literal + " </identifier>\n"; }
