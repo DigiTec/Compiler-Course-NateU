@@ -1,0 +1,34 @@
+start = tokens:Token*
+{ return "<tokens>\n" + tokens.filter(function(elem) { return elem !== ""; }).join("") + "</tokens>"; }
+
+Token = WS / Keyword / Identifier / Symbol / Constant
+
+Constant = IntegerConstant
+
+IntegerConstant = literal:IntegerConstantLiteral
+{ return "<integerConstant> " + literal + " </integerConstant>\n"; }
+
+IntegerConstantLiteral = digits:[0-9]+ { return digits.join(""); }
+
+Keyword = literal:KeywordLiteral
+{ return "<keyword> " + literal + " </keyword>\n"; }
+
+KeywordLiteral = 'class' / 'function' / 'void' / 'var' / 'let' / 'do'
+
+Symbol = literal:SymbolLiteral
+{ return "<symbol> " + literal + " </symbol>\n"; }
+
+SymbolLiteral = '{' / '(' / '}' / ')' / '.' / ';' / '=' / ',' / '~'
+
+Identifier = literal:IdentifierLiteral
+{ return "<identifier> " + literal + " </identifier>\n"; }
+
+IdentifierLiteral = first:[A-Za-z_] rest:[A-Z-a-z_0-9]* { return first + rest.join(""); }
+
+WS = SingleLineComment / MultiLineComment / ws { return ""; }
+
+SingleLineComment = '//' [^\n]* [\n] { return ""; }
+
+MultiLineComment = '/*' ([^*] / [*] ![/])* '*/' { return ""; }
+
+ws = [ \r\n\t] { return ""; }

@@ -1,0 +1,136 @@
+<!DOCTYPE HTML>
+
+<script src="http://cloud.github.com/downloads/dmajda/pegjs/peg-0.7.0.js"></script>
+
+<script>
+var grammars = [
+	{
+		"name": "WebIDL",
+		"src": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/WebIDL.peg",
+		"sourceTexts": [
+		]
+	},
+	{
+		"name": "Jack",
+		"src": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/Jack.peg",
+		"sourceTexts": [
+		]
+	}
+];
+
+function retrieveGrammars() {
+	for(var i in grammars) {
+		var grammar = grammars[i];
+		var xhr = new XMLHttpRequest();
+
+		xhr.open("GET", grammar.src);
+		xhr.onreadystatechange = grammarComplete.bind(grammar, xhr);
+		xhr.send();
+	}
+}
+function grammarComplete(xhr) {
+	if ( xhr.readyState === 4 && xhr.status === 200 ) {
+		var option = new Option(this.name, this.name);
+		option.grammar = this;
+
+		document.getElementById("grammars").options.add(option);
+		this.text = xhr.responseText;
+	}
+}
+
+function retrieveTexts(sourceTexts) {
+	for (var i in sourceTexts) {
+		var sourceText = sourceTexts[i];
+		if (!sourceText.text) {
+			var xhr = new XMLHttpRequest();
+
+			xhr.open("GET", sourceText.src);
+			xhr.onreadystatechange = sourceTextComplete.bind(sourceText, xhr);
+			xhr.send();
+		}
+		else {
+			var option = new Option(sourceText.name, sourceText.name);
+			option.sourceText = sourceText;
+
+			document.getElementById("texts").options.add(option);
+		}
+	}
+}
+function sourceTextComplete(xhr) {
+	if ( xhr.readyState === 4 && xhr.status === 200 ) {
+		var option = new Option(this.name, this.name);
+		option.sourceText = this;
+
+		document.getElementById("texts").options.add(option);
+		this.text = xhr.responseText;
+	}
+}
+
+function selectGrammar(select) {
+	var option = select.options[select.selectedIndex];
+	var grammar = option.grammar;
+	if (grammar) {
+		document.getElementById("grammarText").value = grammar.text;
+		document.getElementById("sourceText").value = "";
+
+		var selectTexts = document.getElementById("texts");
+		selectTexts.innerHTML = "";
+		selectTexts.options.add(new Option("", ""));
+		retrieveTexts(grammar.sourceTexts);
+	}
+	else {
+		document.getElementById("grammarText").value = "";
+	}
+}
+function selectText(select) {
+	var option = select.options[select.selectedIndex];
+	var sourceText = option.sourceText;
+	if (sourceText) {
+		document.getElementById("sourceText").value = sourceText.text;
+	}
+	else {
+		document.getElementById("sourceText").value = "";
+	}
+}
+function runCompiler() {
+	try {
+		var parser = PEG.buildParser(document.getElementById("grammarText").value);
+		try {
+			var result = parser.parse(document.getElementById("sourceText").value);
+			if ( typeof(result) !== "string" ) {
+				result = JSON.stringify(result);
+			}
+			document.getElementById("resultsText").value = result;
+		}
+		catch(exc) {
+			document.getElementById("resultsText").value = "Exception: " + exc.message;
+		}
+	}
+	catch(exc) {
+		document.getElementById("resultsText").value = "Grammar Exception: " + exc.message;
+	}
+}
+</script>
+
+<body onload="retrieveGrammars()">
+	Selected Grammar:<select id="grammars" onchange="selectGrammar(this)"><option value=""></option></select>
+	Selected Text:<select id="texts" onchange="selectText(this)"><option value=""></option></select>
+	<button id="compileButton" onclick="runCompiler();">Compile</button>
+
+	<table>
+		<tr>
+			<td align="center">Grammar File</td>
+			<td align="center">Source Text</td>
+		</tr>
+		<tr>
+			<td><textarea id="grammarText" rows=30 cols=80></textarea></td>
+			<td><textarea id="sourceText" rows=30 cols=80></textarea></td>
+		</tr>
+		<tr>
+			<td colspan="2" align="center">Output</td>
+		</tr>
+		<tr>
+			<td colspan="2"><textarea id="resultsText" rows=40 cols=164></textarea></td>
+		</tr>
+	</table>
+</body>

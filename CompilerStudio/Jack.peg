@@ -1,1 +1,31 @@
-start = .+
+start = WS* Class* WS*
+
+Class = 'class' WS+ Identifier WS* ClassBlock
+
+ClassBlock = '{' WS* ClassMember* WS* '}'
+
+ClassMember = Function
+
+Function = 'function' WS+ ReturnType WS+ Identifier '(' WS* ')' WS* FunctionBlock
+
+FunctionBlock = '{' WS* FunctionMember* WS* '}'
+
+FunctionMember = LocalDefinition / LetStatement / WS
+
+LocalDefinition = 'var' WS+ Identifier WS+ Identifier WS* ';'
+
+LetStatement = 'let' WS+ Identifier WS* '=' Expression ';'
+
+Expression =
+
+ReturnType = Identifier
+
+Identifier = [A-Za-z_] [A-Z-a-z_0-9]*
+
+WS = SingleLineComment / MultiLineComment / ws { return undefined }
+
+SingleLineComment = '//' [^\n]* [\n]
+
+MultiLineComment = '/*' ([^*] / [*] ![/])* '*/'
+
+ws = [ \r\n\t]
