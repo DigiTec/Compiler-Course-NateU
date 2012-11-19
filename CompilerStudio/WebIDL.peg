@@ -1,45 +1,133 @@
-start = WS* Definitions* WS*
+start = Definitions* WS*
 
-Definitions = ExtendedAttributeList* WS* Definition
+// [1] Definition
+Definitions = WS* ExtendedAttributeList* WS* Definition
 
 // [2] Definition
-Definition = Typedef
+Definition = CallbackOrInterface / Dictionary / Typedef
+
+// [3] CallbackOrInterface
+CallbackOrInterface = "callback" WS+ CallbackRestOrInterface / Interface
+
+// [4] CallbackRestOrInterface
+CallbackRestOrInterface = CallbackRest / Interface
+
+// [5] Interface
+Interface = 'interface' WS+ identifier WS* Inheritance? WS* '{' InterfaceMembers* WS* '};'
+
+// [9] InterfaceMembers
+InterfaceMembers = WS* ExtendedAttributeList* WS* InterfaceMember
+
+// [10] InterfaceMember
+InterfaceMember = Const / AttributeOrOperation
+
+// [11] Dictionary
+Dictionary = 'dictionary' WS+ identifier Inheritance? WS* '{' DictionaryMembers* WS* '};'
+
+// [12] DictionaryMembers
+DictionaryMembers = WS* ExtendedAttributeList* WS* DictionaryMember
+
+// [13] DictionaryMember
+DictionaryMember = Type WS+ identifier WS* Default? WS* ';'
+
+// [15] Default
+Default = '=' WS* DefaultValue
+
+// [16] DefaultValue
+DefaultValue = ConstValue / string
+
+// [19] Inheritance
+Inheritance = ':' WS* identifier
+
+// [23] CallbackRest
+CallbackRest = identifier WS* '=' WS* ReturnType WS* '(' ArgumentList ');'
 
 // [24] Typedef
 Typedef = 'typedef' ExtendedAttributeList* WS* Type WS+ identifier WS* ';'
 
-// ExtendedAttributeList = '[' ExtendedAttribute ExtendedAttributes* ']'
-ExtendedAttributeList = '[' WS* ']'
+// [26] Const
+Const = 'const' WS+ ConstType WS+ identifier WS* '=' WS* ConstValue WS* ';'
 
-/*
-ExtendedAttributes = ',' ExtendedAttribute
+// [27] ConstValue
+ConstValue = BooleanLiteral / FloatLiteral / integer / 'null'
 
-ExtendedAttribute = "(" ExtendedAttributeInner ")" ExtendedAttributeRest? /
+// [28] BooleanLiteral
+BooleanLiteral = 'true' / 'false'
+
+// [29] FloatLiteral
+FloatLiteral = float / '-Infinity' / 'Infinity' / 'NaN'
+
+// [30] AttributeOrOperation
+AttributeOrOperation = 'stringifier' WS+ StringifierAttributeOrOperation / Attribute
+//    / Operation
+
+// [31] StringifierAttributeOrOperation
+StringifierAttributeOrOperation = Attribute / OperationRest / ';'
+
+// [32] Attribute
+Attribute = ('inherit' WS+)? ('readonly' WS+)? 'attribute' WS+ Type WS+ identifier WS* ';'
+
+// [33] Inherit UNUSED
+
+// [34] ReadOnly UNUSED
+
+// [39] OperationRest
+OperationRest = ReturnType (WS+ identifier)? WS* '(' ArgumentList ');'
+
+// [40] OptionalIdentifier UNUSED
+
+// [41] ArgumentList TODO
+ArgumentList = WS*
+
+// [49] ExtendedAttributeList
+ExtendedAttributeList = '[' WS* ExtendedAttribute CommaExtendedAttribute* WS* ']'
+
+// [50] ExtendedAttributes
+CommaExtendedAttribute = WS* ',' WS* ExtendedAttribute
+
+// [51] ExtendedAttribute
+ExtendedAttribute = '(' ExtendedAttributeInner? ')' ExtendedAttributeRest? /
     Other ExtendedAttributeRest?
 
+// [52] ExtendedAttributeRest
 ExtendedAttributeRest = ExtendedAttribute
-*/
 
+// [53] ExtendedAttributeInner
+ExtendedAttributeInner = '(' ExtendedAttributeInner? ')' ExtendedAttributeInner? /
+    OtherOrComma ExtendedAttributeInner?
+
+// [54] Other
 Other = integer / float / identifier / string / other / '-' / '.' /
     '...' / ':' / ';' / '<' / '=' / '.' / '?' / 'Date' / 'DOMString' /
     'Infinity' / 'NaN' / 'any' / 'boolean' / 'byte' / 'double' / 'false' /
     'float' / 'long' / 'null' / 'object' / 'octet' / 'or' / 'optional' /
     'sequence' / 'short' / 'true' / 'unsigned' / 'void' / ArgumentNameKeyword
 
+// [55] ArgumentNameKeyword
 ArgumentNameKeyword = 'attribute' / 'callback' / 'const' / 'creator' /
     'deleter' / 'dictionary' / 'enum' / 'exception' / 'getter' / 'implements' /
     'inherit' / 'interface' / 'legacycaller' / 'partial' / 'setter' /
     'static' / 'stringifier' / 'typedef' / 'unrestricted'
 
+// [56] OtherOrComma
+OtherOrComma = Other / ','
 
-// [57] Type
+// [57] Type TODO  / UnionType TypeSuffix?
 Type = SingleType
 
 // [58] SingleType
-SingleType = NonAnyType
+SingleType = NonAnyType / 'any' TypeSuffixStartingWithArray?
 
 // [62] NonAnyType
-NonAnyType = PrimitiveType TypeSuffix?
+NonAnyType = PrimitiveType TypeSuffix? /
+    'DOMString' TypeSuffix? /
+    identifier TypeSuffix? /
+    'sequence<' Type '>' '?'? /
+    'object' TypeSuffix? /
+    'Date' TypeSuffix?
+
+// [63] ConstType
+ConstType = PrimitiveType '?'? / identifier '?'?
 
 // [64] PrimitiveType
 PrimitiveType = UnsignedIntegerType / UnrestrictedFloatType / 'boolean' / 'byte' / 'octet'
@@ -56,10 +144,19 @@ UnsignedIntegerType = 'unsigned' WS+ IntegerType / IntegerType
 // [68] IntegerType
 IntegerType = 'short' / 'long' (WS+ 'long')?
 
-// [69] OptionaLong unused
+// [69] OptionaLong UNUSED
 
-// [70] TypeSuffix
-TypeSuffix = '[]'
+// [70] TypeSuffix TODO
+TypeSuffix = '[]' TypeSuffix? / '?' TypeSuffixStartingWithArray?
+
+// [71] TypeSuffixStartingWithArray
+TypeSuffixStartingWithArray = '[]' TypeSuffix?
+
+// [72] Null UNUSED
+Null = '?'
+
+// [73] ReturnType
+ReturnType = Type / 'void'
 
 WS = SingleLineComment / MultiLineComment / ws
 
@@ -67,7 +164,7 @@ SingleLineComment = '//' [^\n]* [\n] { return ""; }
 
 MultiLineComment = '/*' ([^*] / [*] ![/])* '*/' { return ""; }
 
-ws = [ \r\n\t] { return ""; }
+ws = [ \r\n\t]+ { return ""; }
 
 identifier = [A-Z_a-z] [0-9A-Z_a-z]*
 
