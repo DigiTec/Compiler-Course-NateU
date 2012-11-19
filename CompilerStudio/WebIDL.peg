@@ -15,6 +15,15 @@ CallbackRestOrInterface = CallbackRest / Interface
 // [5] Interface
 Interface = 'interface' WS+ identifier WS* Inheritance? WS* '{' InterfaceMembers* WS* '};'
 
+// [6] Partial
+Partial = 'partial' WS+ PartialDefinition
+
+// [7] PartialDefinition
+PartialDefinition = PartialInterface / PartialDictionary
+
+// [8] PartialInterface
+PartialInterface = 'interface' WS+ identifier WS* '{' InterfaceMembers* WS* '};'
+
 // [9] InterfaceMembers
 InterfaceMembers = WS* ExtendedAttributeList* WS* InterfaceMember
 
@@ -30,14 +39,31 @@ DictionaryMembers = WS* ExtendedAttributeList* WS* DictionaryMember
 // [13] DictionaryMember
 DictionaryMember = Type WS+ identifier WS* Default? WS* ';'
 
+// [14] PartialDictionary
+PartialDictionary = 'dictionary' WS+ identifier WS* '{' DictionaryMembers* WS* '};'
+
 // [15] Default
 Default = '=' WS* DefaultValue
 
 // [16] DefaultValue
 DefaultValue = ConstValue / string
 
+// [17] Exception
+Exception = 'exception' WS+ identifier WS* Inheritance? WS* '{' ExceptionMembers* WS* '};'
+
+// [18] ExceptionMembers
+ExceptionMembers = WS* ExtendedAttributeList* WS* ExceptionMember
+
 // [19] Inheritance
 Inheritance = ':' WS* identifier
+
+// [20] Enum
+Enum = 'enum' WS+ identifier WS* '{' WS* string WS* CommaEnumValue* WS* '};'
+
+// [21] EnumValueList UNUSED
+
+// [22] EnumValues
+CommaEnumValue = ',' WS* string
 
 // [23] CallbackRest
 CallbackRest = identifier WS* '=' WS* ReturnType WS* '(' ArgumentList ');'
@@ -78,6 +104,12 @@ OperationRest = ReturnType (WS+ identifier)? WS* '(' ArgumentList ');'
 
 // [41] ArgumentList TODO
 ArgumentList = WS*
+
+// [47] ExceptionMember
+ExceptionMember = Const / ExceptionField
+
+// [48] ExceptionField
+ExceptionField = Type WS+ identifier WS* ';'
 
 // [49] ExtendedAttributeList
 ExtendedAttributeList = '[' WS* ExtendedAttribute CommaExtendedAttribute* WS* ']'
