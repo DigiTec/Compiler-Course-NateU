@@ -8,6 +8,10 @@ var grammars = [
 		"name": "WebIDL",
 		"src": "https://raw.github.com/DigiTec/Compiler-Course-NateU/master/CompilerStudio/WebIDL.peg",
 		"sourceTexts": [
+			{
+				"name": "WebGL",
+				"src": "https://www.khronos.org/registry/webgl/specs/latest/webgl.idl"
+			},
 		]
 	},
 	{
@@ -115,7 +119,7 @@ function selectText(select) {
 }
 function runCompiler() {
 	try {
-		var parser = PEG.buildParser(document.getElementById("grammarText").value);
+		var parser = PEG.buildParser(document.getElementById("grammarText").value, { "trackLineAndColumn": true });
 		try {
 			var result = parser.parse(document.getElementById("sourceText").value);
 			if ( typeof(result) !== "string" ) {
@@ -124,7 +128,8 @@ function runCompiler() {
 			document.getElementById("resultsText").value = result;
 		}
 		catch(exc) {
-			document.getElementById("resultsText").value = "Exception: " + exc.message;
+			document.getElementById("resultsText").value = "Exception: " + exc.message +
+				" at line " + exc.line + " and column " + exc.column;
 		}
 	}
 	catch(exc) {
