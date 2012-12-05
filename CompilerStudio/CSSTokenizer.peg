@@ -1,4 +1,8 @@
-start = badcomment / comment / CDO / CDC / INCLUDES / DASHMATCH / string
+start = token*
+
+token = s / hash / ident / string / attoken / comment / badcomment / CDO / CDC / INCLUDES / DASHMATCH / symbol
+
+attoken = charset / import
 
 comment = '/*' c1:[^*]* c2:'*'+ c3:commentpart* '/'
 { return { "tt": "comment", value: c1.join('') + c2.join('') + c3.join('') }; }
@@ -21,6 +25,18 @@ string = string1 / string2
 
 badstring = badstring1 / badstring2
 
+ident = dash:'-'? charFirst:nmstart charRest:nmchar*
+{ return { "tt": "ident", "value": dash + charFirst + charRest.join('') }; }
+
+hash = '#' name
+{ return { "tt": "hash", "value": "#" + name }; }
+
+name = chars:nmchar+ { return chars.join(''); }
+
+nmstart = [_a-zA-Z] / nonascii / escape
+
+nmchar = [_a-zA-Z0-9-] / nonascii / escape
+
 string1 = '"' chars:( [^\n\r\f\\"] / '\\' nl / escape )* '"'
 { return { "tt": "string1", "value": chars.join('') }; }
 
@@ -31,10 +47,30 @@ badstring1 = '"' ( [^\n\r\f\\"] / '\\' nl / escape )* '\\'?
 
 badstring2 = '\'' ( [^\n\r\f\\'] / '\\' nl / escape )* '\\'?
 
+charset = '@charset '
+{ return { "tt": "charset" }; }
+
+import = '@' I M P
+{ return { "tt": "import" }; }
+
+I = [iI] / '0'? '0'? '0'? '0'? ( '49' / '69' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [iI] { return "i"; }
+
+M = [mM] / '0'? '0'? '0'? '0'? ( '4' [dD] / '6' [dD] ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [mM] { return "m"; }
+
+P = [pP] / '0'? '0'? '0'? '0'? ( '50' / '70' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [pP] { return "p"; }
+
 escape = unicode / '\\' [^\r\n\f0-9a-f]
 
 unicode = h h? h? h? h? h? ( '\r\n' / [ \t\r\n\f] )?
 
 h = [0-9a-fA-F]
 
+nonascii = [\u00A0-\u10FFFF]
+
 nl = '\n' / '\r\n' / '\r' / '\f'
+
+s = chars:[ \t\r\n\f]+
+{ return { "tt": "ws", "value": chars.join('') }; }
+
+symbol = char:.
+{ return { "tt": "symbol", "value": char }; }
