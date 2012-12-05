@@ -1,13 +1,19 @@
-start =
+start = CDO / CDC / string
 
 CDO = '<!--'
 
 CDC = '-->'
 
-INCLUDES = '~='
-
-DASHMATCH = '|='
-
 string = string1 / string2
 
-string1 = '"' ([^\n\r\f\\"] / \\ ( nl / escape )* '"'
+string1 = '"' ( [^\n\r\f\\"] / '\\' nl / escape )* '"'
+
+string2 = '\'' ( [^\n\r\f\\'] / '\\' nl / escape )* '\''
+
+escape = unicode / '\\' [^\r\n\f0-9a-f]
+
+unicode = h h? h? h? h? h? ( '\r\n' / [ \t\r\n\f] )?
+
+h = [0-9a-fA-F]
+
+nl = '\n' / '\r\n' / '\r' / '\f'
