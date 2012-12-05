@@ -1,0 +1,13 @@
+start =
+
+CDO = '<!--'
+
+CDC = '-->'
+
+INCLUDES = '~='
+
+DASHMATCH = '|='
+
+string = string1 / string2
+
+string1 = '"' ([^\n\r\f\\"] / \\ ( nl / escape )* '"'
