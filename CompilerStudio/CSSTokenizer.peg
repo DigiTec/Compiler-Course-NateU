@@ -1,14 +1,32 @@
-start = CDO / CDC / string
+start = comment / CDO / CDC / INCLUDES / DASHMATCH / string
 
-CDO = '<!--'
+comment = '/*' c1:[^*]* c2:'*'+ c3:commentpart* '/'
+{ return { "tt": "comment", value: c1.join('') + c2.join('') + c3.join('')}; }
 
-CDC = '-->'
+commentpart = c1:[^/*] c2:[^*]* c3:'*'+
+{ return c1 + c2.join('') + c3.join(''); }
+
+CDO = '<!--' { return { "tt": "CDO" }; }
+
+CDC = '-->' { return { "tt": "CDC" }; }
+
+INCLUDES = '~=' { return { "tt": "INCLUDES" }; }
+
+DASHMATCH = '|=' { return { "tt": "DASHMATCH" }; }
 
 string = string1 / string2
 
-string1 = '"' ( [^\n\r\f\\"] / '\\' nl / escape )* '"'
+badstring = badstring1 / badstring2
 
-string2 = '\'' ( [^\n\r\f\\'] / '\\' nl / escape )* '\''
+string1 = '"' chars:( [^\n\r\f\\"] / '\\' nl / escape )* '"'
+{ return { "tt": "string1", "value": chars.join('') }; }
+
+string2 = '\'' chars:( [^\n\r\f\\'] / '\\' nl / escape )* '\''
+{ return { "tt": "string2", "value": chars.join('') }; }
+
+badstring1 = '"' ( [^\n\r\f\\"] / '\\' nl / escape )* '\\'?
+
+badstring2 = '\'' ( [^\n\r\f\\'] / '\\' nl / escape )* '\\'?
 
 escape = unicode / '\\' [^\r\n\f0-9a-f]
 
