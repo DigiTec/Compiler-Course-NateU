@@ -1,10 +1,13 @@
-start = comment / CDO / CDC / INCLUDES / DASHMATCH / string
+start = badcomment / comment / CDO / CDC / INCLUDES / DASHMATCH / string
 
 comment = '/*' c1:[^*]* c2:'*'+ c3:commentpart* '/'
-{ return { "tt": "comment", value: c1.join('') + c2.join('') + c3.join('')}; }
+{ return { "tt": "comment", value: c1.join('') + c2.join('') + c3.join('') }; }
 
 commentpart = c1:[^/*] c2:[^*]* c3:'*'+
 { return c1 + c2.join('') + c3.join(''); }
+
+badcomment = '/*' c1:.*
+{ return { "tt": "badcomment", value: c1.join('') }; }
 
 CDO = '<!--' { return { "tt": "CDO" }; }
 
