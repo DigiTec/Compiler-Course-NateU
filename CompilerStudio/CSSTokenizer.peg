@@ -1,11 +1,14 @@
 start = token*
 
-token = s / hash / ident / string / attoken / comment / badcomment / CDO / CDC / INCLUDES / DASHMATCH / symbol
+token = S / hash / URI / IDENT / STRING / ATTOKEN / COMMENT / badcomment / CDO / CDC / INCLUDES / DASHMATCH / symbol
 
-attoken = charset / import
+ATTOKEN = CHARSET / IMPORT / PAGE / MEDIA
+
+COMMENT = value:comment
+{ return { "tt": "comment", "value": value }; }
 
 comment = '/*' c1:[^*]* c2:'*'+ c3:commentpart* '/'
-{ return { "tt": "comment", value: c1.join('') + c2.join('') + c3.join('') }; }
+{ return c1.join('') + c2.join('') + c3.join(''); }
 
 commentpart = c1:[^/*] c2:[^*]* c3:'*'+
 { return c1 + c2.join('') + c3.join(''); }
@@ -21,12 +24,15 @@ INCLUDES = '~=' { return { "tt": "INCLUDES" }; }
 
 DASHMATCH = '|=' { return { "tt": "DASHMATCH" }; }
 
+STRING = str1:string1 { return { "tt": "string", "value": str1, "delim": "\"" }; } /
+         str2:string2 { return { "tt": "string", "value": str2, "delim": "\'" }; }
+
 string = string1 / string2
 
 badstring = badstring1 / badstring2
 
 ident = dash:'-'? charFirst:nmstart charRest:nmchar*
-{ return { "tt": "ident", "value": dash + charFirst + charRest.join('') }; }
+{ return dash + charFirst + charRest.join(''); }
 
 hash = '#' name
 { return { "tt": "hash", "value": "#" + name }; }
@@ -38,26 +44,92 @@ nmstart = [_a-zA-Z] / nonascii / escape
 nmchar = [_a-zA-Z0-9-] / nonascii / escape
 
 string1 = '"' chars:( [^\n\r\f\\"] / '\\' nl / escape )* '"'
-{ return { "tt": "string1", "value": chars.join('') }; }
+{ return chars.join(''); }
 
 string2 = '\'' chars:( [^\n\r\f\\'] / '\\' nl / escape )* '\''
-{ return { "tt": "string2", "value": chars.join('') }; }
+{ return chars.join(''); }
 
 badstring1 = '"' ( [^\n\r\f\\"] / '\\' nl / escape )* '\\'?
 
 badstring2 = '\'' ( [^\n\r\f\\'] / '\\' nl / escape )* '\\'?
 
-charset = '@charset '
+IDENT = value:ident
+{ return { "tt": "ident", "value": value }; }
+
+CHARSET = '@charset '
 { return { "tt": "charset" }; }
 
-import = '@' I M P
+IMPORT = '@' I M P O R T
 { return { "tt": "import" }; }
 
+PAGE = '@' P A G E
+{ return { "tt": "page" }; }
+
+MEDIA = '@' M E D I A
+{ return { "tt": "media" }; }
+
+IMPORTANT = '!' ( s / comment )* I M P O R T A N T
+{ return { "tt": "important" }; }
+
+EMS = num:num E M
+{ return { "tt": "dimension", "value": num, "type": "ems" }; }
+
+EXS = num:num E X
+{ return { "tt": "dimension", "value": num, "type": "exs" }; }
+
+LENGTH = num:num type:( P X / C M / M M / I N / P T / P C )
+{ return { "tt": "dimension", "value": num, "family": "length", "type": type.join('') }; }
+
+ANGLE = num:num type:( D E G / R A D / G R A D )
+{ return { "tt": "dimension", "value": num, "family": "angle", "type": type.join('') }; }
+
+TIME = num:num type:( M S / S )
+{ return { "tt": "dimension", "value": num, "family": "time", "type": type.join('') }; }
+
+FREQ = num:num type:( H Z / K H Z )
+{ return { "tt": "dimension", "value": num, "family": "freq", "type": type.join('') }; }
+
+DIMENSION = num:num suffix:ident
+{ return { "tt": "dimension", "value": num, "type": suffix }; }
+
+PERCENTAGE = num:num '%'
+{ return { "tt": "percent", "value": num }; }
+
+NUMBER = num:num
+{ return { "tt": "number", "value": num }; }
+
+URI = 'url(' s? value:( string / url ) s? ')'
+{ return { "tt": "url", "value": value }; }
+
+url = chars:( [!#$%&*-~] / nonascii / escape )*
+{ return chars.join(''); }
+
+A = [iI] / '0'? '0'? '0'? '0'? ( '41' / '61' ) ( '\r\n' / [ \t\r\n\f] )? { return "a"; }
+B = [iI] / '0'? '0'? '0'? '0'? ( '42' / '62' ) ( '\r\n' / [ \t\r\n\f] )? { return "b"; }
+C = [iI] / '0'? '0'? '0'? '0'? ( '43' / '63' ) ( '\r\n' / [ \t\r\n\f] )? { return "c"; }
+D = [iI] / '0'? '0'? '0'? '0'? ( '44' / '64' ) ( '\r\n' / [ \t\r\n\f] )? { return "d"; }
+E = [iI] / '0'? '0'? '0'? '0'? ( '45' / '65' ) ( '\r\n' / [ \t\r\n\f] )? { return "e"; }
+F = [iI] / '0'? '0'? '0'? '0'? ( '46' / '66' ) ( '\r\n' / [ \t\r\n\f] )? { return "f"; }
+G = [gG] / '0'? '0'? '0'? '0'? ( '47' / '67' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [gG] { return "g"; }
+H = [hH] / '0'? '0'? '0'? '0'? ( '48' / '68' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [hH] { return "h"; }
 I = [iI] / '0'? '0'? '0'? '0'? ( '49' / '69' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [iI] { return "i"; }
-
+J = [jJ] / '0'? '0'? '0'? '0'? ( '4' [aA] / '6' [aA] ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [jJ] { return "j"; }
+K = [kK] / '0'? '0'? '0'? '0'? ( '4' [bB] / '6' [bB] ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [kK] { return "k"; }
+L = [lL] / '0'? '0'? '0'? '0'? ( '4' [cC] / '6' [cC] ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [lL] { return "l"; }
 M = [mM] / '0'? '0'? '0'? '0'? ( '4' [dD] / '6' [dD] ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [mM] { return "m"; }
-
+N = [nN] / '0'? '0'? '0'? '0'? ( '4' [eE] / '6' [eE] ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [nN] { return "m"; }
+O = [oO] / '0'? '0'? '0'? '0'? ( '4' [fF] / '6' [fF] ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [oO] { return "o"; }
 P = [pP] / '0'? '0'? '0'? '0'? ( '50' / '70' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [pP] { return "p"; }
+Q = [pP] / '0'? '0'? '0'? '0'? ( '51' / '71' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [qQ] { return "q"; }
+R = [pP] / '0'? '0'? '0'? '0'? ( '52' / '72' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [rR] { return "r"; }
+S = [pP] / '0'? '0'? '0'? '0'? ( '53' / '73' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [sS] { return "s"; }
+T = [pP] / '0'? '0'? '0'? '0'? ( '54' / '74' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [tT] { return "t"; }
+U = [pP] / '0'? '0'? '0'? '0'? ( '55' / '75' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [uU] { return "u"; }
+V = [pP] / '0'? '0'? '0'? '0'? ( '56' / '76' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [vV] { return "v"; }
+W = [pP] / '0'? '0'? '0'? '0'? ( '57' / '77' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [wW] { return "w"; }
+X = [pP] / '0'? '0'? '0'? '0'? ( '58' / '78' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [xX] { return "x"; }
+Y = [pP] / '0'? '0'? '0'? '0'? ( '59' / '79' ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [yY] { return "y"; }
+Z = [pP] / '0'? '0'? '0'? '0'? ( '5' [aA] / '7' [aA] ) ( '\r\n' / [ \t\r\n\f] )? / '\\' [zZ] { return "z"; }
 
 escape = unicode / '\\' [^\r\n\f0-9a-f]
 
@@ -69,8 +141,19 @@ nonascii = [\u00A0-\u10FFFF]
 
 nl = '\n' / '\r\n' / '\r' / '\f'
 
+S = value:s
+{ return { "tt": "ws", "value": value }; }
+
 s = chars:[ \t\r\n\f]+
-{ return { "tt": "ws", "value": chars.join('') }; }
+{ return chars.join(''); }
 
 symbol = char:.
 { return { "tt": "symbol", "value": char }; }
+
+num = num2 / num1
+
+num1 = digits:[0-9]+
+{ return parseInt(digits.join('')); }
+
+num2 = digits:[0-9]* '.' fraction:[0-9]+
+{ return parseFloat(digits.join('') + '.' + fraction.join('')); }

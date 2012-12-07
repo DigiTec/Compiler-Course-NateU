@@ -129,7 +129,7 @@ function runCompiler() {
 		try {
 			var result = parser.parse(document.getElementById("sourceText").value);
 			if ( typeof(result) !== "string" ) {
-				result = JSON.stringify(result);
+				result = JSON.stringify(result, null, 2);
 			}
 			document.getElementById("resultsText").value = result;
 		}
